@@ -1,6 +1,7 @@
 #include "app.h"
 #include "util.h"
 
+
 const int bumper_sensor = EV3_PORT_1;
 const int linemon_sensor = EV3_PORT_3;
 const int left_motor = EV3_PORT_A;
@@ -64,7 +65,7 @@ void tracer_stop(void) {
 
 typedef enum { // <1>
   P_WAIT_FOR_LOADING, P_TRANSPORTING,
-  P_WAIT_FOR_UNLOADING, P_RETURNING, P_ARRIVED
+  P_WAIT_FOR_UNLOADING, P_RETURNING, P_ARRIVED,P_TIMEDOUT
 } porter_state; // <2>
 
 porter_state p_state = P_WAIT_FOR_LOADING; // <3>
@@ -77,14 +78,33 @@ void porter_transport(void) {
   case P_WAIT_FOR_LOADING: // <2>
     if( p_entry ) { // <3>
       p_entry = false;
+      timer_start(10000 * 1000);
     }
     // <4>
     if( carrier_cargo_is_loaded() ) { // <5>
       p_state = P_TRANSPORTING; // <6>
       p_entry = true; // <7>
     }
+    if(timer_is_timedout()){
+      p_state = P_TIMEDOUT;
+      p_entry = true;
+    }
     if( p_entry ) { // <8>
       // exit
+      timer_stop();
+    }
+    break;
+  case P_TIMEDOUT:
+    if(p_entry){
+      p_entry = false;
+      horn_confirmation();
+    }
+    if(true){
+      p_state = P_WAIT_FOR_LOADING;
+      p_entry = true;
+    }
+    if(p_entry){
+      //exit
     }
     break;
   case P_TRANSPORTING:
