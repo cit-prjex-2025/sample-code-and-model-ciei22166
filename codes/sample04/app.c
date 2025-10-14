@@ -61,11 +61,12 @@ void tracer_run(void) {
 
 void tracer_stop(void) {
   driver_stop();
+  horn_arrived();
 }
 
 typedef enum { // <1>
-  P_WAIT_FOR_LOADING, P_TRANSPORTING,
-  P_WAIT_FOR_UNLOADING, P_RETURNING, P_ARRIVED,P_TIMEDOUT
+  P_WAIT_FOR_LOADING, P_TRANSPORTING,P_TIMEDOUT,
+  P_WAIT_FOR_UNLOADING, P_RETURNING, P_ARRIVED
 } porter_state; // <2>
 
 porter_state p_state = P_WAIT_FOR_LOADING; // <3>
@@ -78,36 +79,37 @@ void porter_transport(void) {
   case P_WAIT_FOR_LOADING: // <2>
     if( p_entry ) { // <3>
       p_entry = false;
-      timer_start(10000 * 1000);
+      timer_start( 10000 * 1000 );
     }
     // <4>
     if( carrier_cargo_is_loaded() ) { // <5>
       p_state = P_TRANSPORTING; // <6>
       p_entry = true; // <7>
     }
-    if(timer_is_timedout()){
-      p_state = P_TIMEDOUT;
+    if(timer_is_timedout()) { // <8>
+      p_state = P_TIMEDOUT; // <6>
       p_entry = true;
+      // exit
     }
     if( p_entry ) { // <8>
-      // exit
       timer_stop();
+      // exit
     }
     break;
   case P_TIMEDOUT:
-    if(p_entry){
+    if(p_entry) {
       p_entry = false;
       horn_confirmation();
     }
-    if(true){
+    if( true ){
       p_state = P_WAIT_FOR_LOADING;
-      p_entry = true;
+      p_entry=true;
     }
-    if(p_entry){
-      //exit
+    if( p_entry ) {
+      // exit
     }
     break;
-  case P_TRANSPORTING:
+    case P_TRANSPORTING:
     if( p_entry ) {
       p_entry = false;
     }
